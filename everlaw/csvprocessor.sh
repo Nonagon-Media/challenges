@@ -98,19 +98,22 @@ fn_install_webserver() {
 	local ip=$1
 	local key=$2
 
+
 	# Update the system and install nginx
-	ssh -i $key ubuntu@$ip 'sudo apt-get update; sudo apt-get -y install nginx; sudo systemctl start nginx'
+	ssh -i $key ubuntu@$ip 'mkdir /home/ubuntu/tmp;sudo apt-get update; sudo apt-get -y install nginx; sudo systemctl start nginx'
 
 	# if its running a curl should work
 	CODE=$(curl -s -o /dev/null -w "%{http_code}" $ip) 
-	case $CODE in
+	case "$CODE" in
 		200) echo "Looks like the server is installed on $ip"
-		*) echo "Problem installing nginx" && exit 5
+		;;
+		*) echo "Problem installing nginx" 
+		exit 6
 		;;
 	esac
 }
 
-fn_csv_proccessing() {
+fn_csv_proc() {
 	local url=$1
 	local col=$2
 
@@ -124,7 +127,8 @@ fn_csv_proccessing() {
 
 	# awk has a way of skipping that header column but I couldn't get it
 	# This roundabout method is longer but produces the same results
-	awk -v column=$col -F "\"*,\"*" '{print column}' /tmp/retrieved_data.csv | sort -u | tail -n +2 > /tmp/sorted.txt
+	rm -rf /tmp/sorted.txt
+	awk -v column="$col" -F "\"*,\"*" '{print $column}' /tmp/retrieved_data.csv | sort -u | tail -n +2 >> /tmp/sorted.txt
 
 	for data in $(cat /tmp/sorted.txt)
 	do
@@ -136,10 +140,12 @@ fn_csv_proccessing() {
 fn_publish_results() {
 	local  ip=$1
 	local key=$2
-	for data in $(ls /tmp | grep *.txt | grep -v sorted)
+	for data in $(ls /tmp | grep -v sorted | grep txt)
 	do
-		scp -i $key /tmp/$data ubuntu@$ip:/var/www/html/.
+		scp -i $key /tmp/$data ubuntu@$ip:/home/ubuntu/tmp/.
 	done
+
+	ssh -i $key ubuntu@$ip 'sudo cp /home/ubuntu/tmp/*.txt /var/www/html/.'
 }
 
 #####################
@@ -197,7 +203,7 @@ done
 eval set -- "$PARAMS"
 
 fn_install_webserver $IP_ADDRESS $SSH_KEY
-fn_csv_proccessing $CSV_URL $CSV_COL
+fn_csv_proc $CSV_URL $CSV_COLUMN
 fn_publish_results $IP_ADDRESS $SSH_KEY
 
 echo "IP: $IP_ADDRESS"
