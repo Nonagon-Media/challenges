@@ -31,6 +31,11 @@ func_empty() {
 	exit 1
 }
 
+# Cleaning up temporary files
+func_cleanup() {
+	cat /dev/null > ~/tmp/sorted.txt
+	cat /dev/null > ~/tmp/ip_results.txt
+}
 ############
 ### MAIN ###
 ############
@@ -97,11 +102,54 @@ while read -r ip_address;
 #sort -k3 -n ~/tmp/ip_results.txt
 
 # So here are the top 10 IPs to appear
-echo "10 addresses that appear the most: "
-sort -k3 -nr ~/tmp/ip_results.txt | head -n10
+#echo "10 addresses that appear the most: "
+#sort -k3 -nr ~/tmp/ip_results.txt | head -n10
 
+# How many different HTTP return codes are there
+# Using awk again, but changing fields
+func_cleanup
+awk '{print $1, $6, $7}' "$LOGFILE" | sort -k1 >> ~/tmp/sorted.txt
+
+# Array of unique IP Addresses
+# First declare the array
+declare -a unique_ips
+for ip in $(awk '{print $1}' ~/tmp/sorted.txt | sort -u )
+	do
+		# Append the unique ips into the array
+		unique_ips+=("$ip")
+	done
+
+	# Array of unique HTTP codes
+	declare -a http_codes
+	for http_return_code in $(awk '{print $3}' ~/tmp/sorted.txt | sort -u )
+		do
+			http_codes+=("$http_return_code")
+		done
+
+total_codes=${#http_codes[@]}
+total_ips=${#unique_ips[@]}
+
+printf "We logged %s different HTTP return codes\n" "$total_codes"
+printf "We logged %s different IP addresses\n" "$total_ips"
+
+# How many times did each unique IP address return a specific error code
+# Need to iterate over the array we created above with a for loop
+printf "IP ADDRESS\t\t\tHTTP CODE\t\t\tCOUNT\n"
+for i in "${unique_ips[@]}"
+	do
+		for c in "${http_codes[@]}"
+			do
+				code_for_ip=$(grep "$i" ~/tmp/sorted.txt | grep -c "$c")
+
+				# No need for output if the counter is 0
+				if [[ "$code_for_ip" -gt 0 ]]
+				then
+					printf "%s:\t\t\t%s\t\t\t%s\n" "$i" "$c" "$code_for_ip"
+				fi
+			done
+	done
+	
 # Some cleanup
-cat /dev/null > ~/tmp/sorted.txt
-cat /dev/null > ~/tmp/ip_results.txt
+func_cleanup
 
 
