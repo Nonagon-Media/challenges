@@ -23,6 +23,25 @@ import os
 #         print(target_logfile, " is not empty")
 
 
+def logfile_length(target_logfile):
+    """Count the total entries in the logfile."""
+    num_lines = sum(1 for line in open(target_logfile))
+    print(num_lines, "entries in ", target_logfile)
+
+
+def unique_ips(target_logfile):
+    """Unique IP addresses in the logfile."""
+    # A list to hold the IPs
+    ip_list = []
+    with open(target_logfile) as open_logfile:
+        for line in open_logfile:
+            if line.split()[0] in ip_list:
+                pass
+            else:
+                ip_list.append(line.split()[0])
+    print(len(ip_list), "IPS found")
+
+
 def main(argv):
     """Main method."""
     logfile = ''
@@ -40,14 +59,19 @@ def main(argv):
             logfile = arg
             try:
                 if os.stat(logfile).st_size > 0:
-                    print(logfile, " has contents")
+                    pass
+                    # print(logfile, " has contents")
                 else:
                     print(logfile, " is empty or non-existent")
             except OSError:
                 print(logfile, " is empty or non-existent")
                 sys.exit()
 
-    print('Logfile: ', logfile)
+    # print('Logfile: ', logfile)
+    # Count the number of lines in the logfile
+    logfile_length(logfile)
+    unique_ips(logfile)
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
