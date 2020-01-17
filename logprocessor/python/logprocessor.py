@@ -11,16 +11,18 @@ from itertools import islice
 class Logfile:
     """Make each log an object."""
 
-    # Class attribute would go here
-
     # Initialization
     def __init__(self, logfile_name):
         """Initialize logfile object."""
         self.logfile_name = logfile_name
 
-    def get_name(self):
-        """Retrieve logfile name."""
-        return(self.logfile_name)
+    def __str__(self):
+        """Retrieve the logfile name(str)."""
+        return("LOGFILE: {}".format(self.logfile_name))
+
+    def __repr__(self):
+        """Representation."""
+        return repr("LOGFILE: {}".format(self.logfile_name))
 
     def logfile_length(self):
         """Count the total entries in the logfile."""
@@ -124,23 +126,25 @@ def main(argv):
 
     # Create a Logfile object and pass in the given log
     current_logfile = Logfile(logfile)
-    print("Filename: {}".format(current_logfile.get_name))
+
+    # Show the logfile name
+    # print(str(current_logfile))
+    # print(repr(current_logfile))
 
     # Lines in the log
-    # print("Log has {} lines".format(current_logfile.get_logfile_length()))
+    print("Log has {} lines".format(current_logfile.logfile_length()))
 
     # How many unique IPs
-    # print("Log found {} unique IPs".format(current_logfile.unique_ips))
+    print("Log has {} unique IPs".format(current_logfile.unique_ips()))
 
     # Ten IPs that appear the most in the log
-    # top_ten = current_logfile.top_ten_ips
-    # print(type(top_ten))
-    # print("IP ADDRESS", '\t', "COUNT")
-    # for ip in top_ten:
-    #     print(ip[0], '\t', ip[1])
+    top_ten = current_logfile.top_ten_ips()
+    print("IP ADDRESS", '\t', "COUNT")
+    for ip in top_ten:
+        print(ip[0], '\t', ip[1])
 
     # Unique HTTP return codes found
-    # print("{} unique HTTP codes".format(current_logfile.unique_return_codes))
+    print("{} unique HTTP codes".format(current_logfile.unique_return_codes()))
 
 
 if __name__ == "__main__":
